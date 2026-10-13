@@ -13,8 +13,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-MYSQL_HOST="${1:-mysql-devtest1029.mysql.database.azure.com}"
-MYSQL_ADMIN_USER="${2:-sqladmin}"
+MYSQL_HOST="${1:-${MYSQL_HOST:-mysql-devtest1029.mysql.database.azure.com}}"
+MYSQL_ADMIN_USER="${2:-${MYSQL_ADMIN_USER:-sqladmin}}"
 MYSQL_ADMIN_PWD="${MYSQL_ADMIN_PASSWORD:?MYSQL_ADMIN_PASSWORD is required}"
 APP_DB_PASSWORD="${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}"
 
