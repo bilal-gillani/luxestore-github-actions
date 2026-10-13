@@ -32,11 +32,19 @@ app.use(cors({
 }));
 
 // ── Rate Limiting ───────────────────────────────────────────────────────────
+// Helper to extract clean IP (Azure App Service / ARR forwards ip:port in X-Forwarded-For)
+const getClientIp = (req) => {
+    const rawIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    return rawIp.replace(/^\[?([^\]]+)\]?:\d+$/, '$1');
+};
+
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: getClientIp,
+    validate: { ip: false },
     message: { success: false, message: 'Too many requests, please try again later.' }
 });
 
@@ -45,6 +53,8 @@ const authLimiter = rateLimit({
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: getClientIp,
+    validate: { ip: false },
     message: { success: false, message: 'Too many login attempts, please try again later.' }
 });
 
