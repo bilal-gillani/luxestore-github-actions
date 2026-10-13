@@ -111,6 +111,10 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
           value: appDbName
         }
         {
+          name: 'DB_SSL'
+          value: 'true'
+        }
+        {
           name: 'JWT_SECRET'
           value: jwtSecret
         }

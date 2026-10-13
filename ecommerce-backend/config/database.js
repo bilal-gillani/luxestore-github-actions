@@ -1,17 +1,22 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+const isSslEnabled = process.env.DB_SSL === 'true' || process.env.DB_SSL === '1';
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT) || 3306,
+    port: parseInt(process.env.DB_PORT, 10) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'ecommerce_store',
     waitForConnections: true,
-    connectionLimit: 20,
+    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 20,
     queueLimit: 0,
     enableKeepAlive: true,
-    keepAliveInitialDelay: 0
+    keepAliveInitialDelay: 0,
+    ssl: isSslEnabled ? {
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
+    } : undefined
 });
 
 // Test connection on startup

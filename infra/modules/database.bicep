@@ -69,6 +69,16 @@ resource database 'Microsoft.DBforMySQL/flexibleServers/databases@2023-12-30' = 
   }
 }
 
+// Enforce SSL / TLS (require_secure_transport = ON)
+resource secureTransportConfig 'Microsoft.DBforMySQL/flexibleServers/configurations@2023-12-30' = {
+  parent: mysqlServer
+  name: 'require_secure_transport'
+  properties: {
+    value: 'ON'
+    source: 'user-override'
+  }
+}
+
 output serverId string = mysqlServer.id
 output serverName string = mysqlServer.name
 output serverFqdn string = mysqlServer.properties.fullyQualifiedDomainName
