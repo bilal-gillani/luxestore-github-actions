@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "value": "luxestore"
+    },
+    "acrName": {
+      "value": "acrazdevops1029"
+    },
+    "mysqlServerName": {
+      "value": "mysql-devtest1029"
+    },
+    "mysqlAdminUsername": {
+      "value": "sqladmin"
+    },
+    "appDbUsername": {
+      "value": "ecommerce_user"
+    },
+    "appServicePlanSku": {
+      "value": "B1"
+    },
+    "mysqlAdminPassword": {
+      "value": ""
+    },
+    "appDbPassword": {
+      "value": ""
+    },
+    "jwtSecret": {
+      "value": ""
+    }
+  }
+}
