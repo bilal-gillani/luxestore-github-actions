@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxeStore — Premium Online Shopping</title>
+    <meta name="description"
+        content="Discover premium electronics, fashion, home essentials and more at LuxeStore. Free shipping on all orders.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar"></nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-inner">
+            <div class="hero-kicker">✨ Free Shipping on All Orders (v1.1)</div>
+            <h1>Shop Premium.<br>Live Luxuriously.</h1>
+            <p>Discover curated collections of electronics, fashion, home essentials and more — delivered to your door.
+            </p>
+            <div class="hero-cta">
+                <a href="#products" class="btn btn-primary btn-lg">Shop Now →</a>
+                <a href="#categories" class="btn btn-secondary btn-lg">Browse Categories</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="section-sm" id="categories">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">Browse by Category</div>
+                    <h2>Shop by Category</h2>
+                </div>
+            </div>
+            <div class="categories-grid" id="categories-grid">
+                <!-- Loaded by home.js -->
+                <div class="loading-overlay" style="grid-column:1/-1">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="section" id="featured-section">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">Hand-picked for you</div>
+                    <h2>⭐ Featured Products</h2>
+                </div>
+                <a href="#products" class="btn btn-ghost btn-sm">View All →</a>
+            </div>
+            <div class="products-grid" id="featured-grid"></div>
+        </div>
+    </section>
+
+    <!-- All Products Section -->
+    <section class="section" id="products-section">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">Our Collection</div>
+                    <h2 id="products-heading">All Products</h2>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <!-- Search -->
+                    <div style="position:relative;">
+                        <span
+                            style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);">🔍</span>
+                        <input type="text" id="product-search" class="form-control" placeholder="Search products…"
+                            style="padding-left:36px;width:220px;">
+                    </div>
+                    <!-- Sort -->
+                    <select id="sort-select" class="form-control" style="width:auto;">
+                        <option value="created_at:DESC">Newest First</option>
+                        <option value="price:ASC">Price: Low to High</option>
+                        <option value="price:DESC">Price: High to Low</option>
+                        <option value="name:ASC">Name: A–Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Active filter bar -->
+            <div id="active-filter-bar" class="hidden"
+                style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--accent-glow);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius);">
+                <span style="font-size:.85rem;color:var(--text-secondary);">Filtered by:</span>
+                <span class="badge badge-accent" id="active-filter-label"></span>
+                <button id="clear-filter-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;">✕ Clear</button>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="products-grid">
+                <div class="loading-overlay" style="grid-column:1/-1">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </section>
+
+    <!-- USP Banner -->
+    <section class="section-sm">
+        <div class="container">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;">
+                <div class="card" style="text-align:center;padding:28px 20px;">
+                    <div style="font-size:2rem;margin-bottom:10px;">🚀</div>
+                    <h4>Free Shipping</h4>
+                    <p class="text-sm text-muted">On all orders with no minimum</p>
+                </div>
+                <div class="card" style="text-align:center;padding:28px 20px;">
+                    <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+                    <h4>Secure Payments</h4>
+                    <p class="text-sm text-muted">Your payment data is always safe</p>
+                </div>
+                <div class="card" style="text-align:center;padding:28px 20px;">
+                    <div style="font-size:2rem;margin-bottom:10px;">↩️</div>
+                    <h4>Easy Returns</h4>
+                    <p class="text-sm text-muted">30-day hassle-free return policy</p>
+                </div>
+                <div class="card" style="text-align:center;padding:28px 20px;">
+                    <div style="font-size:2rem;margin-bottom:10px;">💬</div>
+                    <h4>24/7 Support</h4>
+                    <p class="text-sm text-muted">We're here whenever you need us</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="footer"></footer>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/components.js"></script>
+    <script src="/js/home.js"></script>
+</body>
+
+</html>

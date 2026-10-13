@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders — LuxeStore Admin</title>
+    <meta name="description" content="View and manage all customer orders.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-section">Main</div>
+        <a href="/admin/dashboard.html" class="sidebar-item" data-page="dashboard">
+            <span class="sidebar-icon">📊</span> Dashboard
+        </a>
+        <div class="sidebar-section">Catalog</div>
+        <a href="/admin/products.html" class="sidebar-item" data-page="products">
+            <span class="sidebar-icon">🛍️</span> Products
+        </a>
+        <a href="/admin/categories.html" class="sidebar-item" data-page="categories">
+            <span class="sidebar-icon">🏷️</span> Categories
+        </a>
+        <div class="sidebar-section">Sales</div>
+        <a href="/admin/orders.html" class="sidebar-item" data-page="orders">
+            <span class="sidebar-icon">📦</span> Orders
+        </a>
+        <div class="sidebar-section">Store</div>
+        <a href="/index.html" class="sidebar-item">
+            <span class="sidebar-icon">🏪</span> View Store
+        </a>
+    </aside>
+
+    <main class="admin-content">
+        <div style="margin-bottom:24px;">
+            <h1 style="font-size:1.6rem;margin-bottom:4px;">Orders</h1>
+            <p class="text-secondary text-sm">View and manage all customer orders</p>
+        </div>
+
+        <!-- Status filter chips -->
+        <div class="filters-bar" style="margin-bottom:20px;">
+            <button class="filter-chip active" data-status="">All Orders</button>
+            <button class="filter-chip" data-status="pending">⏳ Pending</button>
+            <button class="filter-chip" data-status="processing">⚙️ Processing</button>
+            <button class="filter-chip" data-status="shipped">🚚 Shipped</button>
+            <button class="filter-chip" data-status="delivered">✅ Delivered</button>
+            <button class="filter-chip" data-status="cancelled">❌ Cancelled</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Items</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                    <tr><td colspan="7"><div class="loading-overlay"><div class="spinner"></div></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay" id="order-detail-overlay">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">Order Details</h3>
+            <button class="modal-close-btn" onclick="Modal.close('order-detail-overlay')">✕</button>
+        </div>
+        <div class="modal-body" id="order-detail-body">
+            <div class="loading-overlay"><div class="spinner"></div></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Modal.close('order-detail-overlay')">Close</button>
+        </div>
+    </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/config.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/components.js"></script>
+<script src="/js/admin/orders.js"></script>
+</body>
+</html>

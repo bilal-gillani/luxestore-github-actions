@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — LuxeStore</title>
+    <meta name="description" content="Sign in to your LuxeStore account to shop premium products.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="auth-bg"></div>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🛍️</div>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to your LuxeStore account</p>
+            </div>
+
+            <form id="login-form" style="display:flex;flex-direction:column;gap:18px;">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email Address <span>*</span></label>
+                    <input class="form-control" type="email" id="login-email" placeholder="you@example.com" required
+                        autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password <span>*</span></label>
+                    <input class="form-control" type="password" id="login-password" placeholder="••••••••" required
+                        autocomplete="current-password">
+                </div>
+
+                <button class="btn btn-primary btn-full btn-lg" type="submit" id="login-btn">
+                    Sign In →
+                </button>
+            </form>
+
+            <p style="text-align:center;margin-top:24px;font-size:.875rem;color:var(--text-muted);">
+                Don't have an account?
+                <a href="/register.html" style="color:var(--accent);font-weight:600;">Create one →</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/components.js"></script>
+    <script src="/js/auth.js"></script>
+</body>
+
+</html>

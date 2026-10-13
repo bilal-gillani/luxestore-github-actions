@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — LuxeStore</title>
+    <meta name="description" content="LuxeStore Admin Dashboard - Analytics and store management.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-section">Main</div>
+        <a href="/admin/dashboard.html" class="sidebar-item" data-page="dashboard">
+            <span class="sidebar-icon">📊</span> Dashboard
+        </a>
+        <div class="sidebar-section">Catalog</div>
+        <a href="/admin/products.html" class="sidebar-item" data-page="products">
+            <span class="sidebar-icon">🛍️</span> Products
+        </a>
+        <a href="/admin/categories.html" class="sidebar-item" data-page="categories">
+            <span class="sidebar-icon">🏷️</span> Categories
+        </a>
+        <div class="sidebar-section">Sales</div>
+        <a href="/admin/orders.html" class="sidebar-item" data-page="orders">
+            <span class="sidebar-icon">📦</span> Orders
+        </a>
+        <div class="sidebar-section">Store</div>
+        <a href="/index.html" class="sidebar-item">
+            <span class="sidebar-icon">🏪</span> View Store
+        </a>
+    </aside>
+
+    <!-- Content -->
+    <main class="admin-content">
+        <div style="margin-bottom:32px;">
+            <h1 style="font-size:1.6rem;margin-bottom:4px;">Dashboard</h1>
+            <p class="text-secondary text-sm">Welcome back! Here's what's happening in your store.</p>
+        </div>
+
+        <!-- Loading overlay for initial load -->
+        <div id="stats-area"></div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid" id="stat-cards" style="margin-bottom:32px;">
+            <div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Tables row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px;">
+            <!-- Recent Orders -->
+            <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <h3>Recent Orders</h3>
+                    <a href="/admin/orders.html" class="btn btn-ghost btn-sm">View All →</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-orders">
+                            <tr><td colspan="5"><div class="loading-overlay"><div class="spinner spinner-sm"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Products -->
+            <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <h3>Top Products</h3>
+                    <a href="/admin/products.html" class="btn btn-ghost btn-sm">Manage →</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-products">
+                            <tr><td colspan="3"><div class="loading-overlay"><div class="spinner spinner-sm"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/config.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/components.js"></script>
+<script src="/js/admin/dashboard.js"></script>
+</body>
+</html>

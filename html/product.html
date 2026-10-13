@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail — LuxeStore</title>
+    <meta name="description" content="View product details on LuxeStore.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb" style="padding-top:24px;">
+        <a href="/index.html">🏠 Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="/index.html">Shop</a>
+        <span class="breadcrumb-sep">›</span>
+        <span id="breadcrumb-product" style="color:var(--text-secondary);">Product</span>
+    </div>
+
+    <!-- Main product area -->
+    <div id="product-main">
+        <div class="loading-overlay" style="padding:80px 0;"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Related Products -->
+    <section class="section hidden" id="related-section">
+        <div class="section-header">
+            <div>
+                <div class="section-kicker">You may also like</div>
+                <h2>Related Products</h2>
+            </div>
+        </div>
+        <div class="products-grid" id="related-grid"></div>
+    </section>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/config.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/components.js"></script>
+<script src="/js/product.js"></script>
+</body>
+</html>

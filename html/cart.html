@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart — LuxeStore</title>
+    <meta name="description" content="Review your shopping cart and proceed to checkout.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="/index.html">🏠 Home</a>
+            <span class="breadcrumb-sep">›</span>
+            <span>Shopping Cart</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <h1>🛒 Your Cart</h1>
+            <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑 Clear Cart</button>
+        </div>
+    </div>
+
+    <div class="cart-layout">
+        <!-- Cart Items -->
+        <div id="cart-list">
+            <div class="loading-overlay"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div id="cart-summary" class="hidden">
+            <div class="order-summary">
+                <h3 style="margin-bottom:20px;">Order Summary</h3>
+
+                <div class="summary-line">
+                    <span>Items (<span id="summary-items">0</span>)</span>
+                    <span id="summary-subtotal">$0.00</span>
+                </div>
+                <div class="summary-line">
+                    <span>Shipping</span>
+                    <span id="summary-shipping" style="color:var(--success);">Free 🚀</span>
+                </div>
+                <div class="summary-line" style="border-top:1px solid var(--border);margin-top:8px;padding-top:16px;font-weight:700;font-size:1.05rem;">
+                    <span>Total</span>
+                    <span id="summary-total" style="color:var(--accent);">$0.00</span>
+                </div>
+
+                <a href="/checkout.html" id="checkout-btn"
+                    class="btn btn-primary btn-full btn-lg" style="margin-top:20px;">
+                    Proceed to Checkout →
+                </a>
+                <a href="/index.html" class="btn btn-ghost btn-full" style="margin-top:8px;">
+                    ← Continue Shopping
+                </a>
+
+                <div style="margin-top:20px;padding:14px;background:var(--bg-secondary);border-radius:var(--radius);text-align:center;">
+                    <div style="font-size:1.3rem;margin-bottom:4px;">🔒</div>
+                    <div class="text-xs text-muted">Secure checkout. Your data is encrypted.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/config.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/components.js"></script>
+<script src="/js/cart.js"></script>
+</body>
+</html>

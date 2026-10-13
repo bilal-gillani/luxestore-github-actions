@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products — LuxeStore Admin</title>
+    <meta name="description" content="Add, edit and manage products in your LuxeStore.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-section">Main</div>
+        <a href="/admin/dashboard.html" class="sidebar-item" data-page="dashboard">
+            <span class="sidebar-icon">📊</span> Dashboard
+        </a>
+        <div class="sidebar-section">Catalog</div>
+        <a href="/admin/products.html" class="sidebar-item" data-page="products">
+            <span class="sidebar-icon">🛍️</span> Products
+        </a>
+        <a href="/admin/categories.html" class="sidebar-item" data-page="categories">
+            <span class="sidebar-icon">🏷️</span> Categories
+        </a>
+        <div class="sidebar-section">Sales</div>
+        <a href="/admin/orders.html" class="sidebar-item" data-page="orders">
+            <span class="sidebar-icon">📦</span> Orders
+        </a>
+        <div class="sidebar-section">Store</div>
+        <a href="/index.html" class="sidebar-item">
+            <span class="sidebar-icon">🏪</span> View Store
+        </a>
+    </aside>
+
+    <main class="admin-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px;">
+            <div>
+                <h1 style="font-size:1.6rem;margin-bottom:4px;">Products</h1>
+                <p class="text-secondary text-sm">Manage your product catalog</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Product</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Featured</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody">
+                    <tr><td colspan="7"><div class="loading-overlay"><div class="spinner"></div></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div class="modal-overlay" id="product-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Add New Product</h3>
+            <button class="modal-close-btn" onclick="Modal.close('product-modal')">✕</button>
+        </div>
+        <form id="prod-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="prod-name">Product Name <span>*</span></label>
+                    <input class="form-control" type="text" id="prod-name" placeholder="e.g. Wireless Headphones Pro" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="prod-category">Category</label>
+                        <select class="form-control" id="prod-category">
+                            <option value="">— Select Category —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="prod-price">Price ($) <span>*</span></label>
+                        <input class="form-control" type="number" id="prod-price" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="prod-stock">Stock Quantity</label>
+                        <input class="form-control" type="number" id="prod-stock" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="prod-image">Image URL</label>
+                        <input class="form-control" type="url" id="prod-image" placeholder="https://…">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="prod-description">Description</label>
+                    <textarea class="form-control" id="prod-description" rows="4"
+                        placeholder="Describe this product…"></textarea>
+                </div>
+                <label class="checkbox-group">
+                    <input type="checkbox" id="prod-featured">
+                    <span class="form-label" style="margin:0;">⭐ Mark as Featured</span>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="Modal.close('product-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="save-product-btn">Save Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/config.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/components.js"></script>
+<script src="/js/admin/products.js"></script>
+</body>
+</html>
