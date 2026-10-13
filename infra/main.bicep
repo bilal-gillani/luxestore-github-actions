@@ -15,18 +15,18 @@ param mysqlAdminUsername string = 'sqladmin'
 
 @secure()
 @description('MySQL Administrator password')
-param mysqlAdminPassword string
+param mysqlAdminPassword string = ''
 
 @description('Application Database username')
 param appDbUsername string = 'ecommerce_user'
 
 @secure()
 @description('Application Database password')
-param appDbPassword string
+param appDbPassword string = ''
 
 @secure()
 @description('JWT Secret Key for Backend API')
-param jwtSecret string
+param jwtSecret string = ''
 
 @description('Backend Docker image name and tag (e.g. luxestore-backend:latest)')
 param backendImage string = 'luxestore-backend:latest'
