@@ -28,11 +28,17 @@ param appDbPassword string = ''
 @description('JWT Secret Key for Backend API')
 param jwtSecret string = ''
 
-@description('Backend Docker image name and tag (e.g. luxestore-backend:latest)')
-param backendImage string = 'luxestore-backend:latest'
+@description('Backend Production Docker image name and tag (e.g. mcr.microsoft.com/appsvc/staticsite:latest or luxestore-backend:latest)')
+param backendProdImage string = 'mcr.microsoft.com/appsvc/staticsite:latest'
 
-@description('Frontend Docker image name and tag (e.g. luxestore-frontend:latest)')
-param frontendImage string = 'luxestore-frontend:latest'
+@description('Backend Staging Docker image name and tag (e.g. luxestore-backend:latest)')
+param backendStagingImage string = 'luxestore-backend:latest'
+
+@description('Frontend Production Docker image name and tag (e.g. mcr.microsoft.com/appsvc/staticsite:latest or luxestore-frontend:latest)')
+param frontendProdImage string = 'mcr.microsoft.com/appsvc/staticsite:latest'
+
+@description('Frontend Staging Docker image name and tag (e.g. luxestore-frontend:latest)')
+param frontendStagingImage string = 'luxestore-frontend:latest'
 
 @description('App Service Plan SKU (Default S1 Standard)')
 param appServicePlanSku string = 'S1'
@@ -86,8 +92,10 @@ module appservice 'modules/appservice.bicep' = {
     backendAppName: backendAppName
     frontendAppName: frontendAppName
     acrLoginServer: acrLoginServer
-    backendImage: backendImage
-    frontendImage: frontendImage
+    backendProdImage: backendProdImage
+    backendStagingImage: backendStagingImage
+    frontendProdImage: frontendProdImage
+    frontendStagingImage: frontendStagingImage
     managedIdentityId: identity.outputs.identityId
     managedIdentityClientId: identity.outputs.identityClientId
     mysqlServerFqdn: database.outputs.serverFqdn

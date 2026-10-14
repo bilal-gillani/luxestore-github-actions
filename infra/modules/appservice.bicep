@@ -22,11 +22,17 @@ param frontendAppName string
 @description('ACR Login Server (e.g., acrazdevops1029.azurecr.io)')
 param acrLoginServer string
 
-@description('Backend Docker image and tag')
-param backendImage string
+@description('Backend Production Docker image and tag')
+param backendProdImage string
 
-@description('Frontend Docker image and tag')
-param frontendImage string
+@description('Backend Staging Docker image and tag')
+param backendStagingImage string
+
+@description('Frontend Production Docker image and tag')
+param frontendProdImage string
+
+@description('Frontend Staging Docker image and tag')
+param frontendStagingImage string
 
 @description('Resource ID of the User Assigned Managed Identity')
 param managedIdentityId string
@@ -57,6 +63,23 @@ var backendPlanTier = (startsWith(backendAppServicePlanSku, 'S')
 var frontendPlanTier = (startsWith(frontendAppServicePlanSku, 'S')
   ? 'Standard'
   : (startsWith(frontendAppServicePlanSku, 'P') ? 'PremiumV3' : 'Basic'))
+
+var formattedBackendProd = startsWith(backendProdImage, 'DOCKER|')
+  ? backendProdImage
+  : (contains(backendProdImage, '/') ? 'DOCKER|${backendProdImage}' : 'DOCKER|${acrLoginServer}/${backendProdImage}')
+var formattedBackendStaging = startsWith(backendStagingImage, 'DOCKER|')
+  ? backendStagingImage
+  : (contains(backendStagingImage, '/')
+      ? 'DOCKER|${backendStagingImage}'
+      : 'DOCKER|${acrLoginServer}/${backendStagingImage}')
+var formattedFrontendProd = startsWith(frontendProdImage, 'DOCKER|')
+  ? frontendProdImage
+  : (contains(frontendProdImage, '/') ? 'DOCKER|${frontendProdImage}' : 'DOCKER|${acrLoginServer}/${frontendProdImage}')
+var formattedFrontendStaging = startsWith(frontendStagingImage, 'DOCKER|')
+  ? frontendStagingImage
+  : (contains(frontendStagingImage, '/')
+      ? 'DOCKER|${frontendStagingImage}'
+      : 'DOCKER|${acrLoginServer}/${frontendStagingImage}')
 
 // 1. Linux App Service Plan for Backend
 resource backendAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -101,7 +124,7 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: backendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/${backendImage}'
+      linuxFxVersion: formattedBackendProd
       acrUseManagedIdentityCreds: true
       acrUserManagedIdentityID: managedIdentityClientId
       alwaysOn: true
@@ -189,7 +212,7 @@ resource frontendApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: frontendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/${frontendImage}'
+      linuxFxVersion: formattedFrontendProd
       acrUseManagedIdentityCreds: true
       acrUserManagedIdentityID: managedIdentityClientId
       alwaysOn: true
@@ -238,7 +261,7 @@ resource backendStagingSlot 'Microsoft.Web/sites/slots@2023-12-01' = {
     serverFarmId: backendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/${backendImage}'
+      linuxFxVersion: formattedBackendStaging
       acrUseManagedIdentityCreds: true
       acrUserManagedIdentityID: managedIdentityClientId
       alwaysOn: true
@@ -316,7 +339,7 @@ resource frontendStagingSlot 'Microsoft.Web/sites/slots@2023-12-01' = {
     serverFarmId: frontendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/${frontendImage}'
+      linuxFxVersion: formattedFrontendStaging
       acrUseManagedIdentityCreds: true
       acrUserManagedIdentityID: managedIdentityClientId
       alwaysOn: true

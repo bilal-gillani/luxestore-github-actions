@@ -1,0 +1,408 @@
+name: Build & Deploy LuxeStore
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ============================================================================
+  # Job 1: Build and Push Docker Images to ACR
+  # ============================================================================
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          echo "Logging in to ACR: ${{ vars.ACR_NAME }}..."
+          az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Build and Push Backend Image
+        run: |
+          BACKEND_IMAGE="${{ vars.ACR_NAME }}.azurecr.io/luxestore-backend"
+          echo "Building Backend image: $BACKEND_IMAGE:${{ github.sha }} and $BACKEND_IMAGE:latest"
+          docker build \
+            -t "$BACKEND_IMAGE:${{ github.sha }}" \
+            -t "$BACKEND_IMAGE:latest" \
+            -f ecommerce-backend/Dockerfile \
+            ecommerce-backend/
+          docker push "$BACKEND_IMAGE:${{ github.sha }}"
+          docker push "$BACKEND_IMAGE:latest"
+
+      - name: Build and Push Frontend Image
+        run: |
+          FRONTEND_IMAGE="${{ vars.ACR_NAME }}.azurecr.io/luxestore-frontend"
+          echo "Building Frontend image: $FRONTEND_IMAGE:${{ github.sha }} and $FRONTEND_IMAGE:latest"
+          docker build \
+            -t "$FRONTEND_IMAGE:${{ github.sha }}" \
+            -t "$FRONTEND_IMAGE:latest" \
+            -f html/Dockerfile \
+            html/
+          docker push "$FRONTEND_IMAGE:${{ github.sha }}"
+          docker push "$FRONTEND_IMAGE:latest"
+
+  # ============================================================================
+  # Job 2: Bicep What-If (Plan & Image Resolution)
+  # ============================================================================
+  bicep-what-if:
+    name: Bicep What-If (Plan)
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    outputs:
+      is_bootstrap: ${{ steps.resolve-images.outputs.is_bootstrap }}
+      backend_prod_image: ${{ steps.resolve-images.outputs.backend_prod_image }}
+      backend_staging_image: ${{ steps.resolve-images.outputs.backend_staging_image }}
+      frontend_prod_image: ${{ steps.resolve-images.outputs.frontend_prod_image }}
+      frontend_staging_image: ${{ steps.resolve-images.outputs.frontend_staging_image }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Detect Existing Apps and Resolve Image Targets
+        id: resolve-images
+        run: |
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          PLACEHOLDER="mcr.microsoft.com/appsvc/staticsite:latest"
+          NEW_BACKEND="luxestore-backend:${{ github.sha }}"
+          NEW_FRONTEND="luxestore-frontend:${{ github.sha }}"
+
+          echo "Querying existing Web Apps in resource group '$RG'..."
+          BACKEND_APP=$(az webapp list --resource-group "$RG" --query "[?contains(name, 'luxestore-backend')].name | [0]" -o tsv)
+          FRONTEND_APP=$(az webapp list --resource-group "$RG" --query "[?contains(name, 'luxestore-frontend')].name | [0]" -o tsv)
+
+          if [ -z "$BACKEND_APP" ] || [ "$BACKEND_APP" = "null" ]; then
+            echo "ℹ️ No existing App Services found. Running in BOOTSTRAP mode."
+            IS_BOOTSTRAP="true"
+            PROD_BACKEND="$PLACEHOLDER"
+            PROD_FRONTEND="$PLACEHOLDER"
+          else
+            echo "✅ Existing apps found: Backend='$BACKEND_APP', Frontend='$FRONTEND_APP'"
+            IS_BOOTSTRAP="false"
+
+            PROD_BACKEND=$(az webapp config show --resource-group "$RG" --name "$BACKEND_APP" --query "linuxFxVersion" -o tsv | sed 's/^DOCKER|//')
+            PROD_FRONTEND=$(az webapp config show --resource-group "$RG" --name "$FRONTEND_APP" --query "linuxFxVersion" -o tsv | sed 's/^DOCKER|//')
+
+            [ -z "$PROD_BACKEND" ] && PROD_BACKEND="$PLACEHOLDER"
+            [ -z "$PROD_FRONTEND" ] && PROD_FRONTEND="$PLACEHOLDER"
+          fi
+
+          echo "Target Production Backend Image: $PROD_BACKEND"
+          echo "Target Staging Backend Image:    $NEW_BACKEND"
+          echo "Target Production Frontend Image: $PROD_FRONTEND"
+          echo "Target Staging Frontend Image:   $NEW_FRONTEND"
+
+          echo "is_bootstrap=$IS_BOOTSTRAP" >> $GITHUB_OUTPUT
+          echo "backend_prod_image=$PROD_BACKEND" >> $GITHUB_OUTPUT
+          echo "backend_staging_image=$NEW_BACKEND" >> $GITHUB_OUTPUT
+          echo "frontend_prod_image=$PROD_FRONTEND" >> $GITHUB_OUTPUT
+          echo "frontend_staging_image=$NEW_FRONTEND" >> $GITHUB_OUTPUT
+
+      - name: Run Bicep What-If
+        run: |
+          echo "Running Bicep What-If deployment preview..."
+          az deployment group what-if \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --parameters \
+              backendProdImage="${{ steps.resolve-images.outputs.backend_prod_image }}" \
+              backendStagingImage="${{ steps.resolve-images.outputs.backend_staging_image }}" \
+              frontendProdImage="${{ steps.resolve-images.outputs.frontend_prod_image }}" \
+              frontendStagingImage="${{ steps.resolve-images.outputs.frontend_staging_image }}" \
+              mysqlAdminPassword="${{ secrets.MYSQL_ADMIN_PASSWORD }}" \
+              appDbPassword="${{ secrets.APP_DB_PASSWORD }}" \
+              jwtSecret="${{ secrets.JWT_SECRET }}" \
+            --no-pretty-print > whatif_output.txt 2>&1 || true
+
+      - name: Publish What-If Summary to Job
+        run: |
+          echo "## 📋 Bicep Deployment Plan (What-If)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Target |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Deployment Mode** | ${{ steps.resolve-images.outputs.is_bootstrap == 'true' && 'Bootstrap (Initial Setup)' || 'Incremental (Existing Apps)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend Prod Image** | \`${{ steps.resolve-images.outputs.backend_prod_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend Staging Image** | \`${{ steps.resolve-images.outputs.backend_staging_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend Prod Image** | \`${{ steps.resolve-images.outputs.frontend_prod_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend Staging Image** | \`${{ steps.resolve-images.outputs.frontend_staging_image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary><b>Click to expand full What-If report</b></summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" whatif_output.txt | head -n 300 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload What-If Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bicep-what-if-report
+          path: whatif_output.txt
+
+  # ============================================================================
+  # Job 3: Deploy to Staging Slot (Requires Manual Approval in 'staging')
+  # ============================================================================
+  deploy-to-staging:
+    name: Deploy to Staging Slot
+    runs-on: ubuntu-latest
+    needs: [build-and-push, bicep-what-if]
+    environment: staging
+    outputs:
+      backend_app_name: ${{ steps.deploy-infra.outputs.backend_app_name }}
+      frontend_app_name: ${{ steps.deploy-infra.outputs.frontend_app_name }}
+      frontend_staging_url: ${{ steps.deploy-infra.outputs.frontend_staging_url }}
+      backend_staging_url: ${{ steps.deploy-infra.outputs.backend_staging_url }}
+      mysql_server_name: ${{ steps.deploy-infra.outputs.mysql_server_name }}
+      mysql_server_fqdn: ${{ steps.deploy-infra.outputs.mysql_server_fqdn }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Infrastructure via Bicep
+        id: deploy-infra
+        run: |
+          echo "Executing Bicep deployment in resource group '${{ vars.AZURE_RESOURCE_GROUP }}'..."
+          DEPLOY_OUTPUT=$(az deployment group create \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --parameters \
+              backendProdImage="${{ needs.bicep-what-if.outputs.backend_prod_image }}" \
+              backendStagingImage="${{ needs.bicep-what-if.outputs.backend_staging_image }}" \
+              frontendProdImage="${{ needs.bicep-what-if.outputs.frontend_prod_image }}" \
+              frontendStagingImage="${{ needs.bicep-what-if.outputs.frontend_staging_image }}" \
+              mysqlAdminPassword="${{ secrets.MYSQL_ADMIN_PASSWORD }}" \
+              appDbPassword="${{ secrets.APP_DB_PASSWORD }}" \
+              jwtSecret="${{ secrets.JWT_SECRET }}" \
+            --query "properties.outputs" -o json)
+
+          BACKEND_APP=$(echo "$DEPLOY_OUTPUT" | jq -r '.backendAppName.value')
+          FRONTEND_APP=$(echo "$DEPLOY_OUTPUT" | jq -r '.frontendAppName.value')
+          FRONTEND_STAGING_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.frontendStagingUrl.value')
+          BACKEND_STAGING_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.backendStagingUrl.value')
+          MYSQL_SERVER_NAME=$(echo "$DEPLOY_OUTPUT" | jq -r '.mysqlServerName.value')
+          MYSQL_SERVER_FQDN=$(echo "$DEPLOY_OUTPUT" | jq -r '.mysqlServerFqdn.value')
+
+          echo "backend_app_name=$BACKEND_APP" >> $GITHUB_OUTPUT
+          echo "frontend_app_name=$FRONTEND_APP" >> $GITHUB_OUTPUT
+          echo "frontend_staging_url=$FRONTEND_STAGING_URL" >> $GITHUB_OUTPUT
+          echo "backend_staging_url=$BACKEND_STAGING_URL" >> $GITHUB_OUTPUT
+          echo "mysql_server_name=$MYSQL_SERVER_NAME" >> $GITHUB_OUTPUT
+          echo "mysql_server_fqdn=$MYSQL_SERVER_FQDN" >> $GITHUB_OUTPUT
+
+          echo "Deployment completed successfully."
+          echo "- Backend App: $BACKEND_APP"
+          echo "- Frontend App: $FRONTEND_APP"
+          echo "- Frontend Staging URL: $FRONTEND_STAGING_URL"
+
+      - name: Initialize Database Schema and Permissions
+        run: |
+          MYSQL_NAME="${{ steps.deploy-infra.outputs.mysql_server_name }}"
+          MYSQL_FQDN="${{ steps.deploy-infra.outputs.mysql_server_fqdn }}"
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          RULE_NAME="GitHubActionsRunner-$GITHUB_RUN_ID"
+
+          echo "Temporarily allowing runner IP ($RUNNER_IP) in MySQL firewall..."
+          az mysql flexible-server firewall-rule create \
+            --resource-group "$RG" \
+            --name "$MYSQL_NAME" \
+            --rule-name "$RULE_NAME" \
+            --start-ip-address "$RUNNER_IP" \
+            --end-ip-address "$RUNNER_IP"
+
+          echo "Ensuring MySQL client is available..."
+          which mysql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y default-mysql-client; }
+
+          echo "Executing init-db.sh..."
+          MYSQL_HOST="$MYSQL_FQDN" \
+          MYSQL_ADMIN_USER="sqladmin" \
+          MYSQL_ADMIN_PASSWORD="${{ secrets.MYSQL_ADMIN_PASSWORD }}" \
+          APP_DB_PASSWORD="${{ secrets.APP_DB_PASSWORD }}" \
+          bash scripts/init-db.sh
+
+          echo "Removing temporary MySQL firewall rule..."
+          az mysql flexible-server firewall-rule delete \
+            --resource-group "$RG" \
+            --name "$MYSQL_NAME" \
+            --rule-name "$RULE_NAME" \
+            --yes || true
+
+      - name: Restart Staging Slots
+        run: |
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          BACKEND_APP="${{ steps.deploy-infra.outputs.backend_app_name }}"
+          FRONTEND_APP="${{ steps.deploy-infra.outputs.frontend_app_name }}"
+
+          echo "Restarting Backend Staging Slot ($BACKEND_APP/staging)..."
+          az webapp restart --resource-group "$RG" --name "$BACKEND_APP" --slot staging
+
+          echo "Restarting Frontend Staging Slot ($FRONTEND_APP/staging)..."
+          az webapp restart --resource-group "$RG" --name "$FRONTEND_APP" --slot staging
+
+  # ============================================================================
+  # Job 4: Smoke Tests for Staging Apps
+  # ============================================================================
+  smoke-tests-staging:
+    name: Smoke Tests for Staging Apps
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging]
+    steps:
+      - name: Test Frontend & Backend Staging Endpoints
+        run: |
+          STAGING_URL="${{ needs.deploy-to-staging.outputs.frontend_staging_url }}"
+          echo "Target Staging URL: $STAGING_URL"
+
+          MAX_ATTEMPTS=20
+          SLEEP_SECONDS=10
+          SUCCESS=false
+
+          echo "Waiting for Staging containers to warm up..."
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            ROOT_STATUS=$(curl -s -k -o /dev/null -w "%{http_code}" "$STAGING_URL/" || true)
+            HEALTH_STATUS=$(curl -s -k -o /dev/null -w "%{http_code}" "$STAGING_URL/api/health" || true)
+
+            echo "Attempt $i/$MAX_ATTEMPTS -> Root (/): $ROOT_STATUS, API Health (/api/health): $HEALTH_STATUS"
+
+            if [ "$ROOT_STATUS" -eq 200 ] && [ "$HEALTH_STATUS" -eq 200 ]; then
+              echo "✅ Both Frontend and Backend Staging endpoints returned HTTP 200!"
+              HEALTH_PAYLOAD=$(curl -s -k "$STAGING_URL/api/health" || true)
+              echo "API Health Payload: $HEALTH_PAYLOAD"
+              SUCCESS=true
+              break
+            fi
+
+            sleep $SLEEP_SECONDS
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Smoke tests failed! Staging apps did not become healthy within the timeout."
+            exit 1
+          fi
+
+      - name: Record Staging Test Result to Summary
+        run: |
+          echo "## ✅ Staging Smoke Tests Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend Staging**: [${{ needs.deploy-to-staging.outputs.frontend_staging_url }}](${{ needs.deploy-to-staging.outputs.frontend_staging_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend Healthcheck**: [${{ needs.deploy-to-staging.outputs.frontend_staging_url }}/api/health](${{ needs.deploy-to-staging.outputs.frontend_staging_url }}/api/health)" >> $GITHUB_STEP_SUMMARY
+          echo "- Both static frontend and reverse-proxied backend API verified successfully." >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Job 5: Swap to Production (Requires Manual Approval in 'production')
+  # ============================================================================
+  swap-to-production:
+    name: Swap Slots to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging, smoke-tests-staging]
+    environment: production
+    steps:
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Perform Slot Swaps (Staging -> Production)
+        run: |
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          BACKEND_APP="${{ needs.deploy-to-staging.outputs.backend_app_name }}"
+          FRONTEND_APP="${{ needs.deploy-to-staging.outputs.frontend_app_name }}"
+
+          echo "🔄 Swapping Backend App Service Staging slot into Production..."
+          az webapp deployment slot swap \
+            --resource-group "$RG" \
+            --name "$BACKEND_APP" \
+            --slot staging \
+            --target-slot production
+
+          echo "🔄 Swapping Frontend App Service Staging slot into Production..."
+          az webapp deployment slot swap \
+            --resource-group "$RG" \
+            --name "$FRONTEND_APP" \
+            --slot staging \
+            --target-slot production
+
+          echo "✅ Slot swaps completed."
+
+      - name: Verify Production Health with Auto-Rollback
+        run: |
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          BACKEND_APP="${{ needs.deploy-to-staging.outputs.backend_app_name }}"
+          FRONTEND_APP="${{ needs.deploy-to-staging.outputs.frontend_app_name }}"
+          PROD_URL="https://${FRONTEND_APP}.azurewebsites.net"
+
+          echo "Testing Production endpoints post-swap: $PROD_URL"
+          MAX_ATTEMPTS=15
+          SLEEP_SECONDS=8
+          SUCCESS=false
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            ROOT_STATUS=$(curl -s -k -o /dev/null -w "%{http_code}" "$PROD_URL/" || true)
+            HEALTH_STATUS=$(curl -s -k -o /dev/null -w "%{http_code}" "$PROD_URL/api/health" || true)
+
+            echo "Production Check $i/$MAX_ATTEMPTS -> Root: $ROOT_STATUS, API: $HEALTH_STATUS"
+
+            if [ "$ROOT_STATUS" -eq 200 ] && [ "$HEALTH_STATUS" -eq 200 ]; then
+              echo "✅ Production health checks passed!"
+              SUCCESS=true
+              break
+            fi
+
+            sleep $SLEEP_SECONDS
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Production health check failed! Initiating automatic rollback swap..."
+            az webapp deployment slot swap \
+              --resource-group "$RG" \
+              --name "$FRONTEND_APP" \
+              --slot staging \
+              --target-slot production || true
+
+            az webapp deployment slot swap \
+              --resource-group "$RG" \
+              --name "$BACKEND_APP" \
+              --slot staging \
+              --target-slot production || true
+
+            echo "⚠️ Rollback slot swap executed. Production restored to previous version."
+            exit 1
+          fi
+
+      - name: Log Deployment Success
+        run: |
+          FRONTEND_APP="${{ needs.deploy-to-staging.outputs.frontend_app_name }}"
+          echo "## 🎉 Production Deployment Succeeded!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production Store**: [https://${FRONTEND_APP}.azurewebsites.net](https://${FRONTEND_APP}.azurewebsites.net)" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Health Endpoint**: [https://${FRONTEND_APP}.azurewebsites.net/api/health](https://${FRONTEND_APP}.azurewebsites.net/api/health)" >> $GITHUB_STEP_SUMMARY
