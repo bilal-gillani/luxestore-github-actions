@@ -63,6 +63,8 @@ jobs:
       frontendAppName: ${{ steps.deploy-bicep.outputs.frontendAppName }}
       backendAppUrl: ${{ steps.deploy-bicep.outputs.backendAppUrl }}
       frontendAppUrl: ${{ steps.deploy-bicep.outputs.frontendAppUrl }}
+      backendStagingUrl: ${{ steps.deploy-bicep.outputs.backendStagingUrl }}
+      frontendStagingUrl: ${{ steps.deploy-bicep.outputs.frontendStagingUrl }}
       acrLoginServer: ${{ steps.deploy-bicep.outputs.acrLoginServer }}
     steps:
       - name: Checkout Repository
@@ -95,6 +97,8 @@ jobs:
           echo "frontendAppName=$(echo "$DEPLOY_OUTPUT" | jq -r .frontendAppName.value)" >> "$GITHUB_OUTPUT"
           echo "backendAppUrl=$(echo "$DEPLOY_OUTPUT" | jq -r .backendAppUrl.value)" >> "$GITHUB_OUTPUT"
           echo "frontendAppUrl=$(echo "$DEPLOY_OUTPUT" | jq -r .frontendAppUrl.value)" >> "$GITHUB_OUTPUT"
+          echo "backendStagingUrl=$(echo "$DEPLOY_OUTPUT" | jq -r .backendStagingUrl.value)" >> "$GITHUB_OUTPUT"
+          echo "frontendStagingUrl=$(echo "$DEPLOY_OUTPUT" | jq -r .frontendStagingUrl.value)" >> "$GITHUB_OUTPUT"
           echo "acrLoginServer=$(echo "$DEPLOY_OUTPUT" | jq -r .acrLoginServer.value)" >> "$GITHUB_OUTPUT"
 
   # ============================================================================
@@ -218,49 +222,120 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Backend Container
+      - name: Deploy Backend Container to Staging Slot
         run: |
-          echo "Updating Backend Web App (${{ needs.provision-infra.outputs.backendAppName }})..."
+          echo "Deploying Backend Container to Staging Slot (${{ needs.provision-infra.outputs.backendAppName }}/staging)..."
           az webapp config container set \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --name "${{ needs.provision-infra.outputs.backendAppName }}" \
+            --slot staging \
             --docker-custom-image-name "${{ needs.provision-infra.outputs.acrLoginServer }}/luxestore-backend:${{ github.sha }}"
           az webapp restart \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ needs.provision-infra.outputs.backendAppName }}"
+            --name "${{ needs.provision-infra.outputs.backendAppName }}" \
+            --slot staging
 
-      - name: Deploy Frontend Container
+      - name: Deploy Frontend Container to Staging Slot
         run: |
-          echo "Updating Frontend Web App (${{ needs.provision-infra.outputs.frontendAppName }})..."
+          echo "Deploying Frontend Container to Staging Slot (${{ needs.provision-infra.outputs.frontendAppName }}/staging)..."
           az webapp config container set \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --name "${{ needs.provision-infra.outputs.frontendAppName }}" \
+            --slot staging \
             --docker-custom-image-name "${{ needs.provision-infra.outputs.acrLoginServer }}/luxestore-frontend:${{ github.sha }}"
           az webapp restart \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ needs.provision-infra.outputs.frontendAppName }}"
+            --name "${{ needs.provision-infra.outputs.frontendAppName }}" \
+            --slot staging
 
-      - name: Verify Backend Health Probe
+      - name: Perform Smoke Tests on Staging Slot
         run: |
-          BACKEND_URL="${{ needs.provision-infra.outputs.backendAppUrl }}"
-          echo "Checking health probe at $BACKEND_URL/api/health..."
-          for i in {1..12}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/api/health" || true)
+          FRONTEND_STAGING_URL="${{ needs.provision-infra.outputs.frontendStagingUrl }}"
+          echo "=========================================================="
+          echo "🧪 Running Smoke Tests on Staging Environment: $FRONTEND_STAGING_URL"
+          echo "=========================================================="
+          
+          # 1. Test Frontend Staging base URL
+          echo "👉 Test 1: Probing Frontend base URL ($FRONTEND_STAGING_URL)..."
+          FE_READY=false
+          for i in {1..18}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_STAGING_URL" || true)
             if [ "$STATUS" = "200" ]; then
-              echo "✅ Backend API is healthy (HTTP 200)!"
-              exit 0
+              echo "✅ Frontend Staging is UP (HTTP 200)!"
+              FE_READY=true
+              break
             fi
-            echo "Waiting for backend to become ready... attempt $i (status: $STATUS)"
+            echo "Waiting for frontend staging container to warm up... attempt $i (status: $STATUS)"
             sleep 10
           done
-          echo "⚠️ Health check timed out or returned non-200, continuing verification."
+
+          if [ "$FE_READY" != "true" ]; then
+            echo "❌ Smoke Test Failed: Frontend Staging did not return HTTP 200 within 3 minutes."
+            exit 1
+          fi
+
+          # 2. Test Backend Health VIA Frontend reverse proxy (/api/health)
+          # This verifies: Frontend Nginx + Reverse Proxy + Backend Node API + MySQL DB Connection!
+          echo "👉 Test 2: Probing Backend API health via Frontend Proxy ($FRONTEND_STAGING_URL/api/health)..."
+          CHAIN_READY=false
+          for i in {1..18}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_STAGING_URL/api/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ End-to-end 3-tier chain is healthy (HTTP 200)!"
+              CHAIN_READY=true
+              break
+            fi
+            echo "Waiting for backend proxy to become healthy... attempt $i (status: $STATUS)"
+            sleep 10
+          done
+
+          if [ "$CHAIN_READY" != "true" ]; then
+            echo "❌ Smoke Test Failed: Backend health via Frontend proxy did not return HTTP 200."
+            exit 1
+          fi
+
+          echo "🎉 All smoke tests passed on Staging! Ready to swap into Production."
+
+      - name: Swap Backend Staging into Production
+        run: |
+          echo "🔄 Swapping Backend Staging slot into Production (${{ needs.provision-infra.outputs.backendAppName }})..."
+          az webapp deployment slot swap \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ needs.provision-infra.outputs.backendAppName }}" \
+            --slot staging \
+            --target-slot production
+          echo "✅ Backend swapped successfully."
+
+      - name: Swap Frontend Staging into Production
+        run: |
+          echo "🔄 Swapping Frontend Staging slot into Production (${{ needs.provision-infra.outputs.frontendAppName }})..."
+          az webapp deployment slot swap \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ needs.provision-infra.outputs.frontendAppName }}" \
+            --slot staging \
+            --target-slot production
+          echo "✅ Frontend swapped successfully."
+
+      - name: Verify Live Production Health
+        run: |
+          FRONTEND_PROD_URL="${{ needs.provision-infra.outputs.frontendAppUrl }}"
+          echo "Checking live production health ($FRONTEND_PROD_URL/api/health)..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_PROD_URL/api/health" || true)
+          echo "Production Status: $STATUS"
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Live Production is active and healthy!"
+          else
+            echo "⚠️ Production returned status: $STATUS"
+          fi
 
       - name: Summary & Endpoints
         run: |
           echo "=========================================================="
-          echo "🎉 LuxeStore Deployment Successful!"
+          echo "🎉 LuxeStore Zero-Downtime Deployment Successful!"
           echo "=========================================================="
-          echo "Frontend App : ${{ needs.provision-infra.outputs.frontendAppUrl }}"
-          echo "Backend App  : ${{ needs.provision-infra.outputs.backendAppUrl }}"
-          echo "Database FQDN: ${{ needs.provision-infra.outputs.mysqlServerFqdn }}"
+          echo "Production Frontend : ${{ needs.provision-infra.outputs.frontendAppUrl }}"
+          echo "Production Backend  : ${{ needs.provision-infra.outputs.backendAppUrl }}"
+          echo "Staging Frontend    : ${{ needs.provision-infra.outputs.frontendStagingUrl }}"
+          echo "Staging Backend     : ${{ needs.provision-infra.outputs.backendStagingUrl }}"
+          echo "Database FQDN       : ${{ needs.provision-infra.outputs.mysqlServerFqdn }}"
           echo "=========================================================="

@@ -105,5 +105,7 @@ output backendAppName string = appservice.outputs.backendAppName
 output frontendAppName string = appservice.outputs.frontendAppName
 output backendAppServicePlanName string = appservice.outputs.backendAppServicePlanName
 output frontendAppServicePlanName string = appservice.outputs.frontendAppServicePlanName
+output backendStagingUrl string = 'https://${appservice.outputs.backendStagingFqdn}'
+output frontendStagingUrl string = 'https://${appservice.outputs.frontendStagingFqdn}'
 output managedIdentityClientId string = identity.outputs.identityClientId
 output acrLoginServer string = acrLoginServer
