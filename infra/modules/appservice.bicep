@@ -22,10 +22,10 @@ param frontendAppName string
 @description('ACR Login Server (e.g., acrazdevops1029.azurecr.io)')
 param acrLoginServer string
 
-@description('Backend Docker image and tag (e.g. luxestore-backend:latest)')
+@description('Backend Docker image and tag')
 param backendImage string
 
-@description('Frontend Docker image and tag (e.g. luxestore-frontend:latest)')
+@description('Frontend Docker image and tag')
 param frontendImage string
 
 @description('Resource ID of the User Assigned Managed Identity')
