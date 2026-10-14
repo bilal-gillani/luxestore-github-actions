@@ -69,7 +69,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
-        message: 'E-Commerce API is running',
+        message: 'E-Commerce API is running (2nd Version)',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
