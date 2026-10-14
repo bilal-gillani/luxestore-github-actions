@@ -13,22 +13,14 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   location: location
 }
 
-// 2. Reference existing ACR
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: acrName
-}
-
-// AcrPull Built-in Role Definition ID: 7f951dda-4ed3-4680-a7ca-43fe172d538d
-var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
-
-// 3. Assign AcrPull role to the Managed Identity on the ACR
-resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, managedIdentity.id, acrPullRoleId)
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+// 2. Assign AcrPull role to the Managed Identity on the ACR
+// Delegated to child module so principalId can be used in the deterministic GUID name,
+// preventing RoleAssignmentUpdateNotPermitted errors if the identity is recreated.
+module acrRoleAssignment 'acrRoleAssignment.bicep' = {
+  name: 'acrRoleAssignmentDeployment'
+  params: {
+    acrName: acrName
     principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
   }
 }
 
