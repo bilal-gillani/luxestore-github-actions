@@ -1,11 +1,17 @@
 @description('Location for the App Service resources')
 param location string = resourceGroup().location
 
-@description('Name of the App Service Plan')
-param appServicePlanName string
+@description('Name of the Backend App Service Plan')
+param backendAppServicePlanName string
 
-@description('SKU name for the App Service Plan')
-param appServicePlanSku string = 'B1'
+@description('SKU name for the Backend App Service Plan')
+param backendAppServicePlanSku string = 'S1'
+
+@description('Name of the Frontend App Service Plan')
+param frontendAppServicePlanName string
+
+@description('SKU name for the Frontend App Service Plan')
+param frontendAppServicePlanSku string = 'S1'
 
 @description('Backend Web App Name')
 param backendAppName string
@@ -45,17 +51,38 @@ param appDbName string = 'ecommerce_store'
 @description('JWT Secret Key')
 param jwtSecret string
 
-// 1. Linux App Service Plan
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: appServicePlanName
+var backendPlanTier = (startsWith(backendAppServicePlanSku, 'S')
+  ? 'Standard'
+  : (startsWith(backendAppServicePlanSku, 'P') ? 'PremiumV3' : 'Basic'))
+var frontendPlanTier = (startsWith(frontendAppServicePlanSku, 'S')
+  ? 'Standard'
+  : (startsWith(frontendAppServicePlanSku, 'P') ? 'PremiumV3' : 'Basic'))
+
+// 1. Linux App Service Plan for Backend
+resource backendAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: backendAppServicePlanName
   location: location
   kind: 'linux'
   properties: {
     reserved: true
   }
   sku: {
-    name: appServicePlanSku
-    tier: 'Basic'
+    name: backendAppServicePlanSku
+    tier: backendPlanTier
+  }
+}
+
+// 2. Linux App Service Plan for Frontend
+resource frontendAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: frontendAppServicePlanName
+  location: location
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
+  sku: {
+    name: frontendAppServicePlanSku
+    tier: frontendPlanTier
   }
 }
 
@@ -71,7 +98,7 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
     }
   }
   properties: {
-    serverFarmId: appServicePlan.id
+    serverFarmId: backendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOCKER|${acrLoginServer}/${backendImage}'
@@ -147,7 +174,7 @@ resource frontendApp 'Microsoft.Web/sites@2023-12-01' = {
     }
   }
   properties: {
-    serverFarmId: appServicePlan.id
+    serverFarmId: frontendAppServicePlan.id
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOCKER|${acrLoginServer}/${frontendImage}'
@@ -175,3 +202,5 @@ output backendAppFqdn string = backendApp.properties.defaultHostName
 output frontendAppFqdn string = frontendApp.properties.defaultHostName
 output backendAppName string = backendApp.name
 output frontendAppName string = frontendApp.name
+output backendAppServicePlanName string = backendAppServicePlan.name
+output frontendAppServicePlanName string = frontendAppServicePlan.name

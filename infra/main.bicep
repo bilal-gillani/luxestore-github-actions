@@ -34,12 +34,19 @@ param backendImage string = 'luxestore-backend:latest'
 @description('Frontend Docker image name and tag (e.g. luxestore-frontend:latest)')
 param frontendImage string = 'luxestore-frontend:latest'
 
-@description('App Service Plan SKU')
-param appServicePlanSku string = 'B1'
+@description('App Service Plan SKU (Default S1 Standard)')
+param appServicePlanSku string = 'S1'
+
+@description('Backend App Service Plan SKU')
+param backendAppServicePlanSku string = appServicePlanSku
+
+@description('Frontend App Service Plan SKU')
+param frontendAppServicePlanSku string = appServicePlanSku
 
 var uniqueSuffix = uniqueString(resourceGroup().id)
 var identityName = '${prefix}-uami'
-var appServicePlanName = '${prefix}-asp'
+var backendAppServicePlanName = '${prefix}-backend-asp'
+var frontendAppServicePlanName = '${prefix}-frontend-asp'
 var backendAppName = '${prefix}-backend-${uniqueSuffix}'
 var frontendAppName = '${prefix}-frontend-${uniqueSuffix}'
 var acrLoginServer = '${acrName}.azurecr.io'
@@ -67,13 +74,15 @@ module database 'modules/database.bicep' = {
   }
 }
 
-// 3. App Service Plan & Container Web Apps
+// 3. App Service Plans & Container Web Apps
 module appservice 'modules/appservice.bicep' = {
   name: 'appserviceDeployment'
   params: {
     location: location
-    appServicePlanName: appServicePlanName
-    appServicePlanSku: appServicePlanSku
+    backendAppServicePlanName: backendAppServicePlanName
+    backendAppServicePlanSku: backendAppServicePlanSku
+    frontendAppServicePlanName: frontendAppServicePlanName
+    frontendAppServicePlanSku: frontendAppServicePlanSku
     backendAppName: backendAppName
     frontendAppName: frontendAppName
     acrLoginServer: acrLoginServer
@@ -94,5 +103,7 @@ output backendAppUrl string = 'https://${appservice.outputs.backendAppFqdn}'
 output frontendAppUrl string = 'https://${appservice.outputs.frontendAppFqdn}'
 output backendAppName string = appservice.outputs.backendAppName
 output frontendAppName string = appservice.outputs.frontendAppName
+output backendAppServicePlanName string = appservice.outputs.backendAppServicePlanName
+output frontendAppServicePlanName string = appservice.outputs.frontendAppServicePlanName
 output managedIdentityClientId string = identity.outputs.identityClientId
 output acrLoginServer string = acrLoginServer
