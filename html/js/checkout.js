@@ -54,7 +54,7 @@ async function loadOrderSummary() {
                 `).join('')}
             </div>
             <div class="summary-line"><span>Items (${summary.total_items})</span><span>${formatPrice(summary.total_amount)}</span></div>
-            <div class="summary-line"><span>Shipping</span><span style="color:var(--success)">Free 🚀</span></div>
+            <div class="summary-line"><span>Shipping</span><span style="color:var(--success)">Complimentary</span></div>
             <div class="summary-line total">
                 <span>Total</span>
                 <span>${formatPrice(summary.total_amount)}</span>
@@ -94,7 +94,7 @@ function setupForm() {
                 shipping_name, shipping_address, shipping_city, shipping_phone, notes
             });
 
-            Toast.success('Order placed successfully! 🎉');
+            Toast.success('Order placed successfully!');
             CartBadge.update();
 
             // Show success screen
@@ -105,7 +105,7 @@ function setupForm() {
         } catch (err) {
             Toast.error(err.message || 'Failed to place order. Please try again.');
             btn.disabled = false;
-            btn.innerHTML = '🎉 Place Order';
+            btn.innerHTML = 'Place Order';
         }
     });
 }

@@ -20,7 +20,7 @@ async function loadCart() {
         cartData = data.data;
         renderCart(cartData, data.summary);
     } catch {
-        listEl.innerHTML = emptyState('⚠️', 'Failed to load cart', 'Please refresh the page.');
+        listEl.innerHTML = emptyState(Icons.alert, 'Failed to load cart', 'Please refresh the page.');
     }
 }
 
@@ -30,7 +30,7 @@ function renderCart(items, summary) {
     const checkoutBtn = document.getElementById('checkout-btn');
 
     if (items.length === 0) {
-        listEl.innerHTML = emptyState('🛒', 'Your cart is empty', 'Browse our products and add something you love!',
+        listEl.innerHTML = emptyState(Icons.cart, 'Your cart is empty', 'Browse our products and add something you love!',
             `<a href="/index.html" class="btn btn-primary">Start Shopping</a>`);
         summaryEl.classList.add('hidden');
         return;
@@ -62,7 +62,9 @@ function renderCart(items, summary) {
                     <div style="font-size:1.05rem;font-weight:700;color:var(--accent);">
                         ${formatPrice(item.price * item.quantity)}
                     </div>
-                    <button class="btn btn-danger btn-sm" onclick="removeItem(${item.id})">🗑 Remove</button>
+                    <button class="btn btn-secondary btn-sm" style="color:var(--danger);" onclick="removeItem(${item.id})">
+                        ${Icons.trash} Remove
+                    </button>
                 </div>
             </div>
         `).join('')}
@@ -72,7 +74,7 @@ function renderCart(items, summary) {
     document.getElementById('summary-items').textContent = summary?.total_items || 0;
     document.getElementById('summary-subtotal').textContent = formatPrice(summary?.total_amount || 0);
     document.getElementById('summary-total').textContent = formatPrice(summary?.total_amount || 0);
-    document.getElementById('summary-shipping').textContent = 'Free 🚀';
+    document.getElementById('summary-shipping').textContent = 'Complimentary';
     checkoutBtn.href = '/checkout.html';
 }
 

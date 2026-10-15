@@ -6,6 +6,12 @@
     <title>Product Detail — LuxeStore</title>
     <meta name="description" content="View product details on LuxeStore.">
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        (function() {
+            const t = localStorage.getItem('luxestore-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
 
@@ -14,9 +20,9 @@
 <div class="container">
     <!-- Breadcrumb -->
     <div class="breadcrumb" style="padding-top:24px;">
-        <a href="/index.html">🏠 Home</a>
+        <a href="/index.html">Home</a>
         <span class="breadcrumb-sep">›</span>
-        <a href="/index.html">Shop</a>
+        <a href="/index.html#products-section">Shop</a>
         <span class="breadcrumb-sep">›</span>
         <span id="breadcrumb-product" style="color:var(--text-secondary);">Product</span>
     </div>
@@ -30,7 +36,7 @@
     <section class="section hidden" id="related-section">
         <div class="section-header">
             <div>
-                <div class="section-kicker">You may also like</div>
+                <div class="section-kicker">Recommended</div>
                 <h2>Related Products</h2>
             </div>
         </div>

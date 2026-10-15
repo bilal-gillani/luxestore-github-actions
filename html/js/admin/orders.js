@@ -38,7 +38,7 @@ async function loadOrders(status = '') {
                 <td class="text-sm text-muted">${formatDate(o.created_at)}</td>
                 <td>
                     <div style="display:flex;gap:8px;">
-                        <button class="btn btn-secondary btn-sm" onclick="viewOrder(${o.id})">👁 View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="viewOrder(${o.id})">View</button>
                         <select class="form-control" style="padding:6px 10px;font-size:.8rem;width:auto;"
                             onchange="updateStatus(${o.id}, this.value)">
                             <option value="">Update…</option>
@@ -127,7 +127,7 @@ async function viewOrder(orderId) {
             </div>
         `;
     } catch {
-        body.innerHTML = emptyState('⚠️', 'Failed to load order', '');
+        body.innerHTML = emptyState(Icons.alert, 'Failed to load order', '');
     }
 }
 
@@ -143,23 +143,5 @@ function setupFilters() {
 }
 
 function renderAdminNav(active) {
-    const user = Auth.getUser();
-    const navEl = document.getElementById('navbar');
-    if (navEl) {
-        navEl.innerHTML = `
-            <div class="navbar-inner">
-                <a href="/admin/dashboard.html" class="navbar-logo">
-                    <div class="navbar-logo-icon">⚙️</div>
-                    <span>Luxe<span>Admin</span></span>
-                </a>
-                <div class="navbar-actions">
-                    <a href="/index.html" class="btn btn-ghost btn-sm">🏪 View Store</a>
-                    <button class="btn btn-danger btn-sm" onclick="Auth.logout()">Logout</button>
-                </div>
-            </div>
-        `;
-    }
-    document.querySelectorAll('.sidebar-item').forEach(el => {
-        el.classList.toggle('active', el.dataset.page === active);
-    });
+    AdminNav.render(active);
 }

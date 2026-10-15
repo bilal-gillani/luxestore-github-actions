@@ -28,8 +28,8 @@ async function loadCategories() {
                 <td><span class="badge badge-info">${c.product_count} products</span></td>
                 <td>
                     <div style="display:flex;gap:8px;">
-                        <button class="btn btn-secondary btn-sm" onclick="editCategory(${c.id},'${c.name.replace(/'/g,"\\'")}','${(c.description||'').replace(/'/g,"\\'")}','${c.icon}')">✏️ Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id},'${c.name.replace(/'/g,"\\'")}')">🗑</button>
+                        <button class="btn btn-secondary btn-sm" onclick="editCategory(${c.id},'${c.name.replace(/'/g,"\\'")}','${(c.description||'').replace(/'/g,"\\'")}','${c.icon}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;" onclick="deleteCategory(${c.id},'${c.name.replace(/'/g,"\\'")}')" title="Delete category">${Icons.trash}</button>
                     </div>
                 </td>
             </tr>
@@ -76,7 +76,7 @@ function setupForm() {
         const body = {
             name:        document.getElementById('cat-name').value.trim(),
             description: document.getElementById('cat-desc').value.trim(),
-            icon:        document.getElementById('cat-icon').value.trim() || '📦',
+            icon:        document.getElementById('cat-icon').value.trim() || '',
         };
 
         try {
@@ -99,23 +99,5 @@ function setupForm() {
 }
 
 function renderAdminNav(active) {
-    const user = Auth.getUser();
-    const navEl = document.getElementById('navbar');
-    if (navEl) {
-        navEl.innerHTML = `
-            <div class="navbar-inner">
-                <a href="/admin/dashboard.html" class="navbar-logo">
-                    <div class="navbar-logo-icon">⚙️</div>
-                    <span>Luxe<span>Admin</span></span>
-                </a>
-                <div class="navbar-actions">
-                    <a href="/index.html" class="btn btn-ghost btn-sm">🏪 View Store</a>
-                    <button class="btn btn-danger btn-sm" onclick="Auth.logout()">Logout</button>
-                </div>
-            </div>
-        `;
-    }
-    document.querySelectorAll('.sidebar-item').forEach(el => {
-        el.classList.toggle('active', el.dataset.page === active);
-    });
+    AdminNav.render(active);
 }

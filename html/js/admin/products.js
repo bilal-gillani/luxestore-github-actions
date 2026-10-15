@@ -52,12 +52,12 @@ async function loadProducts() {
                         ${p.stock_quantity}
                     </span>
                 </td>
-                <td>${p.featured ? '<span class="badge badge-accent">⭐ Yes</span>' : '<span class="badge badge-muted">No</span>'}</td>
+                <td>${p.featured ? '<span class="badge badge-accent">Yes</span>' : '<span class="badge badge-muted">No</span>'}</td>
                 <td class="text-sm text-muted">${formatDate(p.created_at)}</td>
                 <td>
                     <div style="display:flex;gap:8px;">
-                        <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">✏️ Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g,"\\'")}')">🗑</button>
+                        <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Edit</button>
+                        <button class="btn btn-danger btn-sm" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;" onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g,"\\'")}')" title="Delete product">${Icons.trash}</button>
                     </div>
                 </td>
             </tr>
@@ -142,27 +142,5 @@ function setupForm() {
 }
 
 function renderAdminNav(active) {
-    const user = Auth.getUser();
-    const navEl = document.getElementById('navbar');
-    if (navEl) {
-        navEl.innerHTML = `
-            <div class="navbar-inner">
-                <a href="/admin/dashboard.html" class="navbar-logo">
-                    <div class="navbar-logo-icon">⚙️</div>
-                    <span>Luxe<span>Admin</span></span>
-                </a>
-                <div class="navbar-actions">
-                    <a href="/index.html" class="btn btn-ghost btn-sm">🏪 View Store</a>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <div class="avatar-btn" style="background:${user?.avatar_color||'#EF4444'};">${(user?.name||'A').charAt(0)}</div>
-                        <span style="font-size:.875rem;font-weight:600;">${user?.name||'Admin'}</span>
-                    </div>
-                    <button class="btn btn-danger btn-sm" onclick="Auth.logout()">Logout</button>
-                </div>
-            </div>
-        `;
-    }
-    document.querySelectorAll('.sidebar-item').forEach(el => {
-        el.classList.toggle('active', el.dataset.page === active);
-    });
+    AdminNav.render(active);
 }

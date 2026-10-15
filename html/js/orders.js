@@ -18,7 +18,7 @@ async function loadOrders() {
         const orders = data.data;
 
         if (orders.length === 0) {
-            el.innerHTML = emptyState('📦', 'No orders yet', 'Start shopping to see your orders here!',
+            el.innerHTML = emptyState(Icons.box, 'No orders yet', 'Start shopping to see your orders here!',
                 `<a href="/index.html" class="btn btn-primary">Shop Now</a>`);
             return;
         }
@@ -44,7 +44,7 @@ async function loadOrders() {
             </div>
         `).join('');
     } catch {
-        el.innerHTML = emptyState('⚠️', 'Failed to load orders', 'Please refresh the page.');
+        el.innerHTML = emptyState(Icons.alert, 'Failed to load orders', 'Please refresh the page.');
     }
 }
 
@@ -107,6 +107,6 @@ async function viewOrder(orderId) {
             ${o.notes ? `<div style="margin-top:16px;padding:14px;background:var(--bg-secondary);border-radius:10px;font-size:.875rem;"><strong>Notes:</strong> ${o.notes}</div>` : ''}
         `;
     } catch {
-        body.innerHTML = emptyState('⚠️', 'Failed to load order', '');
+        body.innerHTML = emptyState(Icons.alert, 'Failed to load order', '');
     }
 }

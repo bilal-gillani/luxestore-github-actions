@@ -6,6 +6,12 @@
     <title>My Orders — LuxeStore</title>
     <meta name="description" content="Track your LuxeStore orders and view order history.">
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        (function() {
+            const t = localStorage.getItem('luxestore-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
 
@@ -14,12 +20,12 @@
 <div class="container">
     <div class="page-header">
         <div class="breadcrumb">
-            <a href="/index.html">🏠 Home</a>
+            <a href="/index.html">Home</a>
             <span class="breadcrumb-sep">›</span>
             <span>My Orders</span>
         </div>
-        <h1>📦 My Orders</h1>
-        <p class="text-secondary" style="margin-top:6px;">Track and manage your order history</p>
+        <h1>My Orders</h1>
+        <p class="text-secondary" style="margin-top:4px;">Review your purchases and track shipments</p>
     </div>
 
     <div id="orders-list" style="display:flex;flex-direction:column;gap:12px;">

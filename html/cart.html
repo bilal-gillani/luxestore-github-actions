@@ -6,6 +6,12 @@
     <title>Shopping Cart — LuxeStore</title>
     <meta name="description" content="Review your shopping cart and proceed to checkout.">
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        (function() {
+            const t = localStorage.getItem('luxestore-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
 
@@ -14,13 +20,16 @@
 <div class="container">
     <div class="page-header">
         <div class="breadcrumb">
-            <a href="/index.html">🏠 Home</a>
+            <a href="/index.html">Home</a>
             <span class="breadcrumb-sep">›</span>
             <span>Shopping Cart</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-            <h1>🛒 Your Cart</h1>
-            <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑 Clear Cart</button>
+            <h1>Shopping Cart</h1>
+            <button class="btn btn-secondary btn-sm" onclick="clearCart()" style="color:var(--danger);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                Clear Cart
+            </button>
         </div>
     </div>
 
@@ -41,11 +50,11 @@
                 </div>
                 <div class="summary-line">
                     <span>Shipping</span>
-                    <span id="summary-shipping" style="color:var(--success);">Free 🚀</span>
+                    <span id="summary-shipping" style="color:var(--success);font-weight:600;">Complimentary</span>
                 </div>
-                <div class="summary-line" style="border-top:1px solid var(--border);margin-top:8px;padding-top:16px;font-weight:700;font-size:1.05rem;">
+                <div class="summary-line total">
                     <span>Total</span>
-                    <span id="summary-total" style="color:var(--accent);">$0.00</span>
+                    <span id="summary-total">$0.00</span>
                 </div>
 
                 <a href="/checkout.html" id="checkout-btn"
@@ -56,9 +65,12 @@
                     ← Continue Shopping
                 </a>
 
-                <div style="margin-top:20px;padding:14px;background:var(--bg-secondary);border-radius:var(--radius);text-align:center;">
-                    <div style="font-size:1.3rem;margin-bottom:4px;">🔒</div>
-                    <div class="text-xs text-muted">Secure checkout. Your data is encrypted.</div>
+                <div style="margin-top:20px;padding:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px;color:var(--text-muted);margin-bottom:4px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Bank-Grade Security</span>
+                    </div>
+                    <div class="text-xs text-muted">256-bit SSL encrypted checkout</div>
                 </div>
             </div>
         </div>

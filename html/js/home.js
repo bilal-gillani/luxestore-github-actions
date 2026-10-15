@@ -73,14 +73,14 @@ async function loadProducts(page = 1) {
         const data = await Api.get(`/products?${q}`);
 
         if (data.data.length === 0) {
-            grid.innerHTML = emptyState('🔍', 'No products found', 'Try adjusting your search or filters.');
+            grid.innerHTML = emptyState(Icons.search, 'No products found', 'Try adjusting your search or filters.');
         } else {
             grid.innerHTML = data.data.map(renderProductCard).join('');
         }
 
         renderPagination(data.pagination);
     } catch {
-        grid.innerHTML = emptyState('⚠️', 'Failed to load products', 'Please refresh the page.');
+        grid.innerHTML = emptyState(Icons.alert, 'Failed to load products', 'Please refresh the page.');
     }
 }
 
@@ -91,21 +91,21 @@ function renderProductCard(p) {
             <div class="product-img-wrap">
                 ${p.image_url
                     ? `<img class="product-img" src="${p.image_url}" alt="${p.name}" loading="lazy">`
-                    : `<div class="product-img-placeholder">${p.category_icon || '📦'}</div>`
+                    : `<div class="product-img-placeholder">${p.category_icon || Icons.bag}</div>`
                 }
-                ${p.featured ? `<span class="product-badge badge-featured">⭐ Featured</span>` : ''}
+                ${p.featured ? `<span class="product-badge badge-featured">Featured</span>` : ''}
                 ${outOfStock ? `<span class="product-badge badge-out-of-stock">Out of Stock</span>` : ''}
             </div>
             <div class="product-body">
-                <div class="product-category">${p.category_icon || ''} ${p.category_name || 'General'}</div>
+                <div class="product-category">${p.category_name || 'General'}</div>
                 <div class="product-name">${p.name}</div>
                 <div class="product-price">${formatPrice(p.price)}</div>
-                <div class="product-stock">${outOfStock ? 'Out of stock' : `${p.stock_quantity} in stock`}</div>
+                <div class="product-stock">${outOfStock ? 'Out of stock' : `${p.stock_quantity} available`}</div>
             </div>
             <div class="product-footer">
                 <button class="btn btn-primary btn-sm w-full" ${outOfStock ? 'disabled' : ''}
                     onclick="event.stopPropagation(); addToCart(${p.id}, '${p.name.replace(/'/g,"\\'")}')">
-                    🛒 Add to Cart
+                    ${Icons.cart} Add to Cart
                 </button>
             </div>
         </div>
@@ -124,7 +124,7 @@ async function addToCart(productId, name) {
     }
     try {
         await Api.post('/cart', { product_id: productId, quantity: 1 });
-        Toast.success(`${name} added to cart! 🛒`);
+        Toast.success(`${name} added to cart!`);
         CartBadge.update();
     } catch (err) {
         Toast.error(err.message || 'Failed to add to cart.');

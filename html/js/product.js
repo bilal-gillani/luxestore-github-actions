@@ -30,7 +30,7 @@ async function loadProduct(id) {
                 <div class="product-detail-img">
                     ${p.image_url
                         ? `<img src="${p.image_url}" alt="${p.name}">`
-                        : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:5rem;">${p.category_icon || '📦'}</div>`
+                        : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:3.5rem;color:var(--text-muted);">${p.category_icon || Icons.bag}</div>`
                     }
                 </div>
                 <div class="product-detail-body">
@@ -39,7 +39,7 @@ async function loadProduct(id) {
                             ${p.category_icon || ''} ${p.category_name || 'General'}
                         </div>
                         <h1 style="font-size:1.75rem;margin-bottom:12px;">${p.name}</h1>
-                        ${p.featured ? `<span class="badge badge-accent" style="margin-bottom:16px;">⭐ Featured Product</span>` : ''}
+                        ${p.featured ? `<span class="badge badge-accent" style="margin-bottom:16px;">Featured Product</span>` : ''}
                     </div>
 
                     <div class="product-detail-price">${formatPrice(p.price)}</div>
@@ -54,7 +54,7 @@ async function loadProduct(id) {
                         <div class="meta-row">
                             <span>Availability</span>
                             <span class="${outOfStock ? 'text-danger' : 'text-success'}" style="color:${outOfStock ? 'var(--danger)' : 'var(--success)'}">
-                                ${outOfStock ? '✗ Out of Stock' : `✓ ${p.stock_quantity} in Stock`}
+                                ${outOfStock ? 'Out of Stock' : `${p.stock_quantity} in Stock`}
                             </span>
                         </div>
                         <div class="meta-row">
@@ -75,7 +75,7 @@ async function loadProduct(id) {
                         <button class="btn btn-primary btn-lg" id="add-cart-btn"
                             ${outOfStock ? 'disabled' : ''}
                             onclick="addToCart(${p.id}, '${p.name.replace(/'/g,"\\'")}', ${p.stock_quantity})">
-                            🛒 ${outOfStock ? 'Out of Stock' : 'Add to Cart'}
+                            ${Icons.cart} ${outOfStock ? 'Out of Stock' : 'Add to Cart'}
                         </button>
                         <a href="/index.html" class="btn btn-secondary btn-lg">← Continue Shopping</a>
                     </div>
@@ -91,7 +91,7 @@ async function loadProduct(id) {
                     <div class="product-img-wrap">
                         ${rp.image_url
                             ? `<img class="product-img" src="${rp.image_url}" alt="${rp.name}" loading="lazy">`
-                            : `<div class="product-img-placeholder">📦</div>`
+                            : `<div class="product-img-placeholder">${Icons.bag}</div>`
                         }
                     </div>
                     <div class="product-body">
@@ -101,7 +101,7 @@ async function loadProduct(id) {
                     <div class="product-footer">
                         <button class="btn btn-primary btn-sm w-full"
                             onclick="event.stopPropagation();addToCart(${rp.id},'${rp.name.replace(/'/g,"\\'")}',${rp.stock_quantity})">
-                            🛒 Add to Cart
+                            ${Icons.cart} Add to Cart
                         </button>
                     </div>
                 </div>
@@ -109,7 +109,7 @@ async function loadProduct(id) {
         }
 
     } catch (err) {
-        main.innerHTML = emptyState('⚠️', 'Product not found', 'This product may have been removed.');
+        main.innerHTML = emptyState(Icons.alert, 'Product not found', 'This product may have been removed.');
     }
 }
 
@@ -136,11 +136,11 @@ async function addToCart(productId, name, stock) {
     if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
     try {
         await Api.post('/cart', { product_id: productId, quantity: qty });
-        Toast.success(`${qty} × ${name} added to cart! 🛒`);
+        Toast.success(`${qty} × ${name} added to cart!`);
         CartBadge.update();
     } catch (err) {
         Toast.error(err.message || 'Failed to add to cart.');
     } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '🛒 Add to Cart'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = `${Icons.cart} Add to Cart`; }
     }
 }

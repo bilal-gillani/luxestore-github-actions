@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await Api.post('/auth/register', { name, email, password });
                 Auth.setSession(data.token, data.user);
-                Toast.success('Account created! Welcome to LuxeStore 🎉');
+                Toast.success('Account created! Welcome to LuxeStore.');
                 setTimeout(() => { window.location.href = '/index.html'; }, 800);
             } catch (err) {
                 Toast.error(err.message || 'Registration failed. Please try again.');

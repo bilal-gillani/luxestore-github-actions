@@ -7,6 +7,13 @@
     <title>Login — LuxeStore</title>
     <meta name="description" content="Sign in to your LuxeStore account to shop premium products.">
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('luxestore-theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+        })();
+    </script>
 </head>
 
 <body>
@@ -14,7 +21,11 @@
     <div class="auth-page">
         <div class="auth-card">
             <div class="auth-logo">
-                <div class="auth-logo-icon">🛍️</div>
+                <a href="/index.html" class="auth-logo-icon" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;" title="Return to LuxeStore">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                </a>
                 <h1 class="auth-title">Welcome Back</h1>
                 <p class="auth-subtitle">Sign in to your LuxeStore account</p>
             </div>
