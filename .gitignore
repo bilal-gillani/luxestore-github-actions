@@ -1,3 +1,5 @@
 db/Dockerfile
 .vscode/
 .azure-pipelines/
+scripts/setup-azure-oidc.ps1
+scripts/setup-azure-oidc.sh
